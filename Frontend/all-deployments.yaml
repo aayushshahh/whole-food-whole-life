@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: react-ui-deployment
+  namespace: default
+  labels:
+    app: react-ui-deployment
+spec:
+  replicas: 1 # number of pods
+  selector:
+    matchLabels:
+      app: react-ui-deployment
+  template:
+    metadata:
+      labels:
+        app: react-ui-deployment
+    spec:
+      containers:
+        - name: wfwl-ui
+          image: us-west1-docker.pkg.dev/dcsc-371007/whole-food-whole-life/wfwl-ui:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: react-ui-service
+spec:
+  selector:
+    app: react-ui-deployment
+  type: NodePort
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: react-ui-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "react-ip"
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: react-ui-service
+                port:
+                  number: 3000
